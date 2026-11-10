@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Projects owned by user
+  projects Project[]
+
+  // Tasks assigned to user
+  assignedTasks Task[]
+
+  // Tasks created by user
+  createdTasks Task[] @relation("TaskCreator")
+
+  // Projects where user is a member
+  projectMemberships ProjectMember[]
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  name      String
+  ownerId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Project owner
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Project tasks
+  tasks Task[]
+
+  // Project members
+  members ProjectMember[]
+}
+
+model ProjectMember {
+  projectId Int
+  userId    Int
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  projectId   Int
+
+  // Task creator
+  createdById Int?
+  createdBy   User? @relation("TaskCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Project containing this task
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Users assigned to this task
+  assignees User[]
+}
