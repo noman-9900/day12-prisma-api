@@ -1,9 +1,10 @@
+
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create or find user
+  // 1. Create or find user
   const user = await prisma.user.upsert({
     where: {
       email: "noman@example.com"
@@ -15,7 +16,7 @@ async function main() {
     }
   });
 
-  // Create or find project
+  // 2. Find or create project
   let project = await prisma.project.findFirst({
     where: {
       name: "Prisma Practice",
@@ -32,7 +33,7 @@ async function main() {
     });
   }
 
-  // Sample tasks
+  // 3. Sample tasks
   const tasks = [
     {
       title: "Learn Prisma",
@@ -48,7 +49,7 @@ async function main() {
     }
   ];
 
-  // Create tasks only if they do not exist
+  // 4. Create tasks only if they do not exist
   for (const task of tasks) {
     const existingTask = await prisma.task.findFirst({
       where: {
@@ -72,8 +73,8 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error);
-    process.exit(1);
+    console.error("Seed failed:", error);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();
